@@ -57,7 +57,7 @@ def get_requirements(filename="requirements.txt"):
     return requires
 
 
-def get_extentions():
+def get_extensions():
     """Manage and generate Extensions
 
     - `correspond_pixels.pyx`
@@ -152,7 +152,6 @@ setup(
     packages=find_packages(
         exclude=[
             "tests",
-            "scripts",
             "tools",
             "data",
             ".readme",
@@ -164,7 +163,12 @@ setup(
     include_package_data=True,  # used for MANIFEST.in
     zip_safe=False,
     ext_modules=cythonize(
-        get_extentions(),
+        get_extensions(),
         language_level="3",
     ),
+    entry_points={
+        'console_scripts': [
+            'cityscapes-raw-eval = pyEdgeEval.scripts.evaluate.cityscapes_raw:main',
+        ],
+    },
 )
