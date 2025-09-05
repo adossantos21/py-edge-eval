@@ -2,6 +2,7 @@
 
 from pyEdgeEval.helpers.evaluate_cityscapes import evaluate_cityscapes_raw
 
-
-if __name__ == "__main__":
+def main():
     evaluate_cityscapes_raw(gt_dir='gtEval')
+if __name__ == "__main__":
+    main()

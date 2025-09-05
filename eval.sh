@@ -1,7 +1,9 @@
-python pyEdgeEval/scripts/evaluate/cityscapes_raw.py \
-/home/robert.breslin/datasets/cityscapes \
-/home/robert.breslin/alessandro/paper_2/mmsegmentation/work_dirs/sebnet_baseline-d-multilabel-head_1xb6_cityscapes/20250826_134843/SBD_preds/d_module \
---output-path '/home/robert.breslin/alessandro/paper_2/mmsegmentation/work_dirs/sebnet_baseline-d-multilabel-head_1xb6_cityscapes/20250826_134843/SBD_Results' \
+# Copy this file to your working directory, make sure the environment where this package was installed is activated.
+# On the following line, `cityscapes-raw-eval` was formerly `python scripts/cityscapes_raw.py`. For package-level install, it was made an executable.
+cityscapes-raw-eval \
+<path_to_cityscapes_root> \
+<path_to_cityscapes_SBD_predictions> \
+--output-path '<path_to_desired_output_folder>' \
 --nonIS \
 --pre-seal \
 --remove-root \
