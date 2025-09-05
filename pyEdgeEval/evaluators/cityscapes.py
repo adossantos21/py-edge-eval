@@ -6,6 +6,7 @@ The original evaluator where GTs are downsampled (interpolated) from full scale.
 """
 
 import os.path as osp
+from typing import Optional
 
 from pyEdgeEval.common.multi_label import (
     calculate_metrics,
@@ -61,12 +62,14 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
         pred_root: str,
         split: str = "val",
         thin: bool = False,
-        gt_dir=None,
-        pred_suffix=None,
+        gt_dir: Optional[str] = None,
+        pred_suffix: Optional[str] = None,
+        remove_root: bool = True,
         **kwargs,
     ):
         self.dataset_root = dataset_root
         self.pred_root = pred_root
+        self.remove_root = remove_root
 
         assert split in ("val", "test")
         self.split = split
@@ -151,6 +154,7 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
         max_dist: float = 0.0035,
         skip_if_nonexistent: bool = False,
         kill_internal: bool = False,
+        multi_label: bool = True,
         **kwargs,
     ) -> None:
 
@@ -168,6 +172,7 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
             self.kill_internal = True
             self.skip_if_nonexistent = True
             self.instance_sensitive = False
+            self.multi_label = multi_label
         elif eval_mode == "post-seal":
             print_log("Using Post-SEAL params", logger=self._logger)
             print_log(f"Using max_dist: {max_dist}", logger=self._logger)
@@ -191,6 +196,7 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
             self.kill_internal = kill_internal
             self.skip_if_nonexistent = skip_if_nonexistent
             self.instance_sensitive = instance_sensitive
+            self.multi_label = multi_label
 
         if self.kill_internal and self.instance_sensitive:
             print_log(
@@ -208,6 +214,7 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
             kill_internal=self.kill_internal,
             skip_if_nonexistent=self.skip_if_nonexistent,
             num_classes=len(self.CLASSES),
+            multi_label=self.multi_label,
         )
 
     def _before_evaluation(self):
@@ -264,8 +271,9 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
             assert osp.exists(edge_path), f"ERR: {edge_path} is not valid"
             assert osp.exists(seg_path), f"ERR: {seg_path} is not valid"
 
-            # prediction file path
-            # sample_name = sample_name.split("/")[1]  # assert city/img
+            # SBD prediction file path; there should be a one-hot encoded edge prediction for each category to ensure pixel overlap at category junctions
+            if self.remove_root:
+                sample_name = sample_name.split("/")[1]  # assert city/img
             pred_path = osp.join(
                 self.pred_root,
                 category_dir,

@@ -14,8 +14,8 @@ import argparse
 import os.path as osp
 import time
 import warnings
+from typing import Optional
 
-import pyEdgeEval
 from pyEdgeEval.evaluators import CityscapesEvaluator, HalfCityscapesEvaluator
 from pyEdgeEval.utils import get_root_logger, mkdir_or_exist
 
@@ -78,6 +78,28 @@ def _common_parser_args(
         default=4,
         help="the number of parallel threads",
     )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="val",
+        help="the dataset split for edge metric evaluation",
+    )
+    parser.add_argument(
+        "--remove-root",
+        action="store_true",
+        help="True, SBD predictions use full path. False, they have only the image basename.",
+    )
+    parser.add_argument(
+        "--multi-label",
+        action="store_true",
+        help="True, use multi-label evaluation. False, use binary evaluation",
+    )
+    parser.add_argument(
+        "--pred-suffix",
+        type=str,
+        default="_leftImg8bit.png",
+        help="adds a suffix to the SBD predictions",
+    )
     return parser
 
 
@@ -124,6 +146,10 @@ def evaluate(
     thresholds: str,
     half: bool,
     nproc: int,
+    split: str = 'val',
+    remove_root: bool = True,
+    multi_label: bool = False,
+    pred_suffix: Optional[str] = None,
 ):
     """Evaluate Cityscapes"""
 
@@ -203,7 +229,6 @@ def evaluate(
     log_file = osp.join(output_path, f"{timestamp}.log")
     logger = get_root_logger(log_file=log_file, log_level="INFO")
     logger.info("Running Cityscapes Evaluation")
-    logger.info(f"pyEdgeEval version: {pyEdgeEval.__version__}")
     logger.info(f"categories:         \t{categories}")
     logger.info(f"thresholds:         \t{thresholds}")
     logger.info(f"scale:              \t{scale}")
@@ -212,6 +237,10 @@ def evaluate(
     logger.info(f"thinning:           \t{apply_thinning}")
     logger.info(f"nms:                \t{apply_nms}")
     logger.info(f"nonIS:              \t{nonIS}")
+    logger.info(f"split:              \t{split}")
+    logger.info(f"remove-root:        \t{remove_root}")
+    logger.info(f"multi-label:        \t{multi_label}")
+    logger.info(f"pred_suffix:        \t{pred_suffix}")
     logger.info(f"Half Res Evaluator: \t{half}")
     logger.info(f"GT directory:       \t{gt_dir}")
     print("\n\n")
@@ -223,8 +252,11 @@ def evaluate(
     evaluator = evaluator_cls(
         dataset_root=cityscapes_path,
         pred_root=pred_path,
+        split=split, 
         thin=thin,
         gt_dir=gt_dir,  # NOTE: we can change the directory where the preprocessed GTs are
+        remove_root=remove_root, # NOTE: we can specify the full path of the images or just the image's basename.
+        pred_suffix=pred_suffix,  # NOTE: we can add a suffix to the predictions.
     )
     if evaluator.sample_names is None:
         # load custom sample names
@@ -241,6 +273,7 @@ def evaluate(
         apply_nms=apply_nms,
         max_dist=max_dist,
         instance_sensitive=instance_sensitive,
+        multi_label=multi_label, # NOTE: by specifying multi_label, we can evaluate for multi-label edge metrics (True) or binary-label edge metrics (False).
     )
 
     # evaluate
@@ -270,6 +303,10 @@ def evaluate_cityscapes_raw(gt_dir: str = "gtEval"):
         thresholds=args.thresholds,
         half=args.half,
         nproc=args.nproc,
+        split=args.split,
+        remove_root=args.remove_root,
+        multi_label=args.multi_label,
+        pred_suffix=args.pred_suffix,
     )
 
 
@@ -291,4 +328,8 @@ def evaluate_cityscapes_thin(gt_dir: str = "gtEval"):
         thresholds=args.thresholds,
         half=True,  # use HalfCityscapesEvaluator
         nproc=args.nproc,
+        split=args.split,
+        remove_root=args.remove_root,
+        multi_label=args.multi_label,
+        pred_suffix=args.pred_suffix,
     )

@@ -1209,13 +1209,13 @@ s = (stack) malloc(sizeof(struct stack_st));
 
 if (s == NULL)
   {
-  (void) fprintf(stderr,nomem_msg);
+  (void) fprintf(stderr, "%s", nomem_msg);
   exit(9);
   }
 s->bottom = (char **) malloc(size * sizeof(char *));
 if (s->bottom == NULL)
   {
-  (void) fprintf(stderr,nomem_msg);
+  (void) fprintf(stderr, "%s", nomem_msg);
   exit(9);
   }
 s->top = s->bottom;
