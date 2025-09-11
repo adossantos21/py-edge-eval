@@ -6,7 +6,7 @@ The original evaluator where GTs are downsampled (interpolated) from full scale.
 """
 
 import os.path as osp
-from typing import Optional
+from typing import Optional, List
 
 from pyEdgeEval.common.multi_label import (
     calculate_metrics,
@@ -114,7 +114,7 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
                 logger=self._logger,
             )
 
-    def set_sample_names(self, sample_names=None, split_file=None):
+    def set_sample_names(self, sample_names: Optional[List] = None, split_file: Optional[str] = None):
         """priortizes `sample_names` more than `split_file`"""
         if sample_names is None:
             # load sample_names from split file
