@@ -257,6 +257,7 @@ def evaluate(
         gt_dir=gt_dir,  # NOTE: we can change the directory where the preprocessed GTs are
         remove_root=remove_root, # NOTE: we can specify the full path of the images or just the image's basename.
         pred_suffix=pred_suffix,  # NOTE: we can add a suffix to the predictions.
+        multi_label=multi_label, # NOTE: by specifying multi_label, we can evaluate for multi-label edge metrics (True) or binary-label edge metrics (False).
     )
     if evaluator.sample_names is None:
         # load custom sample names
@@ -273,9 +274,9 @@ def evaluate(
         apply_nms=apply_nms,
         max_dist=max_dist,
         instance_sensitive=instance_sensitive,
-        multi_label=multi_label, # NOTE: by specifying multi_label, we can evaluate for multi-label edge metrics (True) or binary-label edge metrics (False).
+        multi_label=multi_label,
     )
-
+    
     # evaluate
     evaluator.evaluate(
         categories=categories,
