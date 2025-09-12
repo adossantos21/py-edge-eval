@@ -37,7 +37,14 @@ def _evaluate_single(
 
     # load gt edge
     edge, (height, width) = load_scaled_edge(edge_path, scale) # loads multi-label edge target and scales it
-    edge = decode_png(edge, num_classes) # decodes the multi-label edge target into a one-hot encoded 3D array with shape (num_classes, H, W)
+    if multi_label:
+        edge = decode_png(edge, num_classes) # decodes the multi-label edge target into a one-hot encoded 3D array with shape (num_classes, H, W)
+    else:
+        edge = np.array(edge, dtype=np.uint8)
+        edge[edge == 255] = 1
+        # Unsqueeze to make edge have shape (1, H, W)
+        edge = np.expand_dims(edge, axis=0)
+
     cat_idx = category - 1
     cat_edge = edge[cat_idx, :, :]
 
@@ -62,25 +69,25 @@ def _evaluate_single(
         cat_seg = None
 
     # evaluate multi-label boundaries
-    if multi_label:
-        count_r, sum_r, count_p, sum_p = evaluate_boundaries_threshold(
-            thresholds=thresholds,
-            pred=pred,
-            gt=cat_edge,
-            gt_seg=cat_seg,
-            max_dist=max_dist,
-            apply_thinning=apply_thinning,
-            kill_internal=kill_internal,
-            skip_if_nonexistent=skip_if_nonexistent,
-            apply_nms=apply_nms,
-            nms_kwargs=dict(
-                r=1,
-                s=5,
-                m=1.01,
-                half_prec=False,
-            ),
-        )
-
+    #if multi_label:
+    count_r, sum_r, count_p, sum_p = evaluate_boundaries_threshold(
+        thresholds=thresholds,
+        pred=pred,
+        gt=cat_edge,
+        gt_seg=cat_seg,
+        max_dist=max_dist,
+        apply_thinning=apply_thinning,
+        kill_internal=kill_internal,
+        skip_if_nonexistent=skip_if_nonexistent,
+        apply_nms=apply_nms,
+        nms_kwargs=dict(
+            r=1,
+            s=5,
+            m=1.01,
+            half_prec=False,
+        ),
+    )
+    '''
     else:
         count_r, sum_r, count_p, sum_p = evaluate_boundaries_binary(
             thresholds=thresholds,
@@ -96,6 +103,7 @@ def _evaluate_single(
                 half_prec=False,
             ),
         )
+    '''
 
     return count_r, sum_r, count_p, sum_p
 
