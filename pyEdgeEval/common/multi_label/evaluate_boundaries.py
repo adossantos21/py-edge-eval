@@ -78,6 +78,7 @@ def evaluate_boundaries_threshold(
             **nms_kwargs,
         )
 
+    #for i_t, thresh in tqdm(enumerate(list(thresholds)), desc=f"Evaluating thresholds", total=len(thresholds)):
     for i_t, thresh in enumerate(list(thresholds)):
 
         _pred = pred >= thresh
