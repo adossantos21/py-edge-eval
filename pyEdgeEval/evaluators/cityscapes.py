@@ -48,10 +48,12 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
 
     EDGE_SUFFIX = None
     ISEDGE_SUFFIX = None
+    RAW_HED_EDGE_SUFFIX = "_gtProc_raw_hed_edge.png"
     RAW_EDGE_SUFFIX = "_gtProc_raw_edge.png"
     THIN_EDGE_SUFFIX = "_gtProc_thin_edge.png"
     RAW_ISEDGE_SUFFIX = "_gtProc_raw_isedge.png"
     THIN_ISEDGE_SUFFIX = "_gtProc_thin_isedge.png"
+
 
     SEG_SUFFIX = "_gtFine_labelTrainIds.png"
     PRED_SUFFIX = "_leftImg8bit.png"
@@ -65,11 +67,13 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
         gt_dir: Optional[str] = None,
         pred_suffix: Optional[str] = None,
         remove_root: bool = True,
+        multi_label: bool = False,
         **kwargs,
     ):
         self.dataset_root = dataset_root
         self.pred_root = pred_root
         self.remove_root = remove_root
+        self.multi_label = multi_label
 
         assert split in ("val", "test")
         self.split = split
@@ -86,8 +90,20 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
                 "Using `raw` mode; setting the suffix respectively",
                 logger=self._logger,
             )
-            self.EDGE_SUFFIX = self.RAW_EDGE_SUFFIX
-            self.ISEDGE_SUFFIX = self.RAW_ISEDGE_SUFFIX
+            if self.multi_label:
+                print_log(
+                    "Using `multi_label` `raw` mode; setting the suffix respectively",
+                    logger=self._logger,
+                )
+                self.EDGE_SUFFIX = self.RAW_EDGE_SUFFIX
+                self.ISEDGE_SUFFIX = self.RAW_ISEDGE_SUFFIX
+            else:
+                print_log(
+                    "Using `binary_label` `raw` mode; setting the suffix respectively",
+                    logger=self._logger,
+                )
+                self.EDGE_SUFFIX = self.RAW_HED_EDGE_SUFFIX
+                self.ISEDGE_SUFFIX = None # Instance sensitive not supported
 
         # change dataset directory and suffix
         if gt_dir:
@@ -115,7 +131,22 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
             )
 
     def set_sample_names(self, sample_names: Optional[List] = None, split_file: Optional[str] = None):
-        """priortizes `sample_names` more than `split_file`"""
+        """
+        Set the sample names for this Cityscapes Evaluator.
+
+        Parameters
+        ----------
+        sample_names: list or None, optional
+            If not None, directly use this as the sample names.
+        split_file: str or None, optional
+            If `sample_names` is None, load the sample names from this file.
+
+        Notes
+        -----
+        The sample names are used to generate the path for loading the groundtruth
+        and prediction files.
+
+        """
         if sample_names is None:
             # load sample_names from split file
             if split_file is None:
@@ -158,6 +189,49 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
         **kwargs,
     ) -> None:
 
+        """
+        Set evaluation parameters
+
+        Parameters
+        ----------
+        eval_mode : str or None
+            One of ("pre-seal", "post-seal", None)
+            - if "pre-seal", set parameters to those used in the pre-SEAL paper
+            - if "post-seal", set parameters to those used in the post-SEAL paper
+            - if None, use custom parameters
+        scale : float
+            Scale of the evaluation. Must be in range (0, 1].
+        apply_thinning : bool
+            Whether to apply thinning to the predicted edges.
+        apply_nms : bool
+            Whether to apply non-maximum suppression (NMS) to the predicted edges.
+        instance_sensitive : bool
+            Whether to use instance-sensitive evaluation.
+        max_dist : float
+            Maximum distance to consider a predicted edge to be correct.
+        skip_if_nonexistent : bool
+            Whether to skip evaluation for samples that do not have a ground truth.
+        kill_internal : bool
+            Whether to remove internal edges from the evaluation.
+        multi_label : bool
+            Whether to evaluate on all labels or only on the first label.
+        **kwargs
+            Additional keyword arguments.
+
+        Notes
+        -----
+        - If `eval_mode` is "pre-seal", the following parameters are overriden:
+            - `instance_sensitive` is set to False
+            - `max_dist` is set to 0.02
+            - `kill_internal` is set to True
+            - `skip_if_nonexistent` is set to True
+        - If `eval_mode` is "post-seal", the following parameters are overriden:
+            - `instance_sensitive` is set to True
+            - `max_dist` is set to the value of `max_dist`
+            - `kill_internal` is set to False
+            - `skip_if_nonexistent` is set to False
+        - If `eval_mode` is None, the custom parameters are used.
+        """
         assert 0 < scale <= 1, f"ERR: scale ({scale}) is not valid"
         self.scale = scale
         self.apply_thinning = apply_thinning
@@ -241,6 +315,19 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
         nproc,
         save_dir,
     ):
+        """
+        Evaluate Cityscapes dataset by category
+
+        Args:
+            category: int. Evaluate on this category
+            thresholds: list of float. Thresholds for evaluation
+            nproc: int. Number of processes to use for evaluation
+            save_dir: str. Directory to save results
+
+        Returns:
+            float. Overall metric for the evaluated category
+
+        """
         self._before_evaluation()
         assert (
             0 < category < len(self.CLASSES) + 1
@@ -297,7 +384,7 @@ class CityscapesEvaluator(BaseMultilabelEvaluator):
 
         # evaluate
         (sample_metrics, threshold_metrics, overall_metric) = calculate_metrics(
-            eval_single=cityscapes_eval_single,
+            eval_single=cityscapes_eval_single, # cityscapes_eval_single is a wrapper that unpacks all the kwargs from evaluate(), see pyEdgeEval/helpers/evaluate_cityscapes.py
             thresholds=thresholds,
             samples=data,
             nproc=nproc,
