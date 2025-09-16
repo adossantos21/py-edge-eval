@@ -1,6 +1,6 @@
 python pyEdgeEval/scripts/evaluate/cityscapes_raw.py \
 <path_to_cityscapes_root> \
-<path_to_sbd_predictions> \
+<path_to_hed_predictions> \
 --output-path <output_path> \
 --categories '[1]' \
 --nonIS \

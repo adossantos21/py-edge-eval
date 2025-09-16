@@ -9,6 +9,6 @@ python pyEdgeEval/scripts/evaluate/cityscapes_raw.py \
 --categories '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]' \
 --max-dist 0.02 \
 --thresholds 99 \
---nproc 24 \
+--nproc 8 \
 --split 'val' \
 --pred-suffix '_SBD.png' \
