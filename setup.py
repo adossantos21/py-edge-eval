@@ -171,7 +171,8 @@ setup(
             'cityscapes-raw-eval = pyEdgeEval.scripts.evaluate.cityscapes_raw:main',
             'cityscapes-thin-eval = pyEdgeEval.scripts.evaluate.cityscapes_thin:main',
             'bsds500 = pyEdgeEval.scripts.evaluate.bsds500:main',
-            'generate-cityscapes-gt = pyEdgeEval.scripts.convert_datasets.cityscapes:main',
+            'generate-cityscapes-sbd-gt = pyEdgeEval.scripts.convert_datasets.cityscapes:main',
+            'generate-cityscapes-hed-gt = pyEdgeEval.scripts.convert_datasets.cityscapes_hed:main',
         ],
     },
 )
